@@ -16,7 +16,7 @@ def lambda_handler(event, context):
         target_object = 'v/{}'.format(record['s3']['object']['eTag'][0:8])
         rendered_template = bytes(pystache.render(template_body, {
             'url': key,
-            'title': key.split('/')[1]
+            'title': urllib.unquote_plus(key.split('/')[1])
         }))
         print('Writing rendered template to {}'.format(target_object))
         s3.put_object(
