@@ -1,0 +1,15 @@
+body {
+	background-color: #181818;
+	width: 100%;
+}
+
+#container {
+	text-align: center;
+}
+
+#asset {
+	max-width: 95vw;
+	max-height: 95vh;
+	cursor: zoom-in;
+}
+

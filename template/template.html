@@ -1,24 +1,16 @@
 <html>
 	<head>
 		<title>{{title}}</title>
-		<style>
-			body {
-				background-color: #181818;
-				width: 100%;
-			}
-
-			#container {
-				text-align: center;
-			}
-		</style>
+		<link rel="stylesheet" type="text/css" href="/inc/style.css" />
 	</head>
 
 	<body>
 
 		<div id="container">
-			<img src="/{{url}}" id="asset" alt="{{title}}" />
+			<img src="/{{url}}" id="asset" alt="{{title}}" onClick="toggle()" />
 		</div>
 
+		<script src="/inc/resize.js" type="application/javascript"></script>
 	</body>
 
 </html>
