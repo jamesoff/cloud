@@ -15,3 +15,10 @@ This is my home-cooked version of cloud-based image hosting a la CloudApp. The f
 uh, pretty sure you can figure it out from the code and the above. If not, this probably isn't for you anyway ;)
 
 Better instructions to follow.
+
+## Approximate usage instructions
+
+```
+% ./post-image.sh Ksov89X.png
+https://cloud.jamesoff.net/v/dbaa1926
+```
