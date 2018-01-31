@@ -22,3 +22,7 @@ Better instructions to follow.
 % ./post-image.sh Ksov89X.png
 https://cloud.jamesoff.net/v/dbaa1926
 ```
+
+## Architecture
+
+![Image of architecture](https://raw.githubusercontent.com/jamesoff/cloud/master/gh-assets/aws.png)
