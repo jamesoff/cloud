@@ -13,3 +13,5 @@ This is my home-cooked version of cloud-based image hosting a la CloudApp. The f
 ## Approximate deployment instructions
 
 uh, pretty sure you can figure it out from the code and the above. If not, this probably isn't for you anyway ;)
+
+Better instructions to follow.
