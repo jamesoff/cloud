@@ -3,8 +3,8 @@
 set -e
 
 echo Uploading template and assets
-aws s3 sync template/ s3://cloud.jamesoff.net/template --delete --exact-timestamps
-aws s3 sync inc/ s3://cloud.jamesoff.net/inc --delete --exact-timestamps
+aws s3 sync s3-files/template/ s3://cloud.jamesoff.net/template --delete --exact-timestamps
+aws s3 sync s3-files/inc/ s3://cloud.jamesoff.net/inc --delete --exact-timestamps
 
 if [[ $1 == "lambda" ]]; then
 	echo Preparing lambda
