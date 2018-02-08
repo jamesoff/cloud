@@ -1,6 +1,7 @@
 import boto3
 import pystache
 import urllib
+import os
 
 
 def lambda_handler(event, context):
@@ -29,7 +30,7 @@ def lambda_handler(event, context):
             StorageClass='STANDARD_IA'
         )
         sqs.send_message(
-            QueueUrl='https://sqs.eu-west-1.amazonaws.com/108685319098/cloud-output',
+            QueueUrl=CLOUD_QUEUE,
             MessageBody='{}={}'.format(key_filename, target_object)
         )
         print('Done')
@@ -37,6 +38,8 @@ def lambda_handler(event, context):
 
 s3 = boto3.client('s3')
 sqs = boto3.client('sqs')
+
+CLOUD_QUEUE = os.environ['CLOUD_QUEUE']
 
 if __name__ == '__main__':
     lambda_handler({'Records': [
