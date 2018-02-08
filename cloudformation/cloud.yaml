@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Create a cloud image-hosting environment"
+Parameters:
+  DomainName:
+    Type: String
+    Description: The DNS domain name the service will run under.
+    AllowedPattern: "^[a-z0-9.]+$"
+    ConstraintDescription: Must be a DNS name
+
+
+Resources:
+  CloudBucket:
+    Type: "AWS::S3::Bucket"
+    Properties:
+      BucketName: !Ref DomainName
+      NotificationConfiguration:
+        LambdaConfigurations:
+          -
+            Event: "s3:ObjectCreated:*"
+            Filter:
+              S3Key:
+                Rules:
+                  -
+                    Name: prefix
+                    Value: "assets/"
+            Function: !GetAtt LambdaFunction.Arn
+    DependsOn: LambdaPolicy
+
+  BucketPolicy:
+    Type: "AWS::S3::BucketPolicy"
+    Properties:
+      Bucket: !Ref DomainName
+      PolicyDocument:
+        Statement:
+          -
+            Action:
+              - "s3:GetObject"
+            Effect: Allow
+            Resource:
+              - Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  - !Ref DomainName
+                  - "/assets/*"
+              - Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  - !Ref DomainName
+                  - "/v/*"
+              - Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  - !Ref DomainName
+                  - "/inc/*"
+              - Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  - !Ref DomainName
+                  - "/index.html"
+            Principal: "*"
+
+  OutputQueue:
+    Type: "AWS::SQS::Queue"
+
+  LambdaFunction:
+    Type: "AWS::Lambda::Function"
+    Properties:
+      Code:
+        S3Bucket: "code.jamesoff.net"
+        S3Key: "cloud/lambda.zip"
+      Environment:
+        Variables:
+          CLOUD_QUEUE: !Ref OutputQueue
+      Handler: lambda_function.lambda_handler
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: python2.7
+
+  LambdaRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: cloud-policy
+          PolicyDocument:
+            Statement:
+              -
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                Resource:
+                  - Fn::Join:
+                    - ""
+                    -
+                      - "arn:aws:s3:::"
+                      - !Ref DomainName
+                      - "/*"
+                Effect: Allow
+              -
+                Action:
+                  - "sqs:SendMessage"
+                Resource:
+                  - !GetAtt OutputQueue.Arn
+                Effect: Allow
+              -
+                Action: "logs:CreateLogGroup"
+                Resource:
+                  - Fn::Join:
+                    - ""
+                    -
+                      - "arn:aws:logs:"
+                      - !Ref AWS::Region
+                      - ":"
+                      - !Ref AWS::AccountId
+                      - ":*"
+                Effect: Allow
+              -
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource:
+                  - Fn::Join:
+                    - ""
+                    -
+                      - "arn:aws:logs:"
+                      - !Ref AWS::Region
+                      - ":"
+                      - !Ref AWS::AccountId
+                      - ":log-group:/aws/lambda/*"
+                Effect: Allow
+
+  LambdaPolicy:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !GetAtt LambdaFunction.Arn
+      Action: "lambda:InvokeFunction"
+      Principal: "s3.amazonaws.com"
+      SourceArn:
+        Fn::Join:
+          - ""
+          -
+            - "arn:aws:s3:::"
+            - !Ref DomainName
+
+  CloudFront:
+    Type: "AWS::CloudFront::Distribution"
+    Properties:
+      DistributionConfig:
+        Aliases:
+          - !Ref DomainName
+        DefaultCacheBehavior:
+          ForwardedValues:
+            QueryString: false
+          TargetOriginId: s3
+          ViewerProtocolPolicy: redirect-to-https
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        DefaultRootObject: index.html
+        Enabled: true
+        Origins:
+          -
+            DomainName:
+              Fn::Join:
+                - ""
+                -
+                  - !Ref DomainName
+                  - ".s3.amazonaws.com"
+            Id: s3
+            S3OriginConfig:
+              OriginAccessIdentity: !Ref AWS::NoValue
+        PriceClass: PriceClass_100
+
+  Certificate:
+    Type: "AWS::CertificateManager::Certificate"
+    Properties:
+      DomainName: !Ref DomainName
