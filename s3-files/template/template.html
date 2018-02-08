@@ -3,6 +3,18 @@
 	<head>
 		<title>{{title}}</title>
 		<link rel="stylesheet" type="text/css" href="/inc/style.css" />
+
+		<meta property="og:description" content="{{description}}" />
+		<meta property="og:title" content="{{title}}" />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="http://{{domain_name}}/{{target_object}}" />
+		<meta property="og:image" content="https://{{domain_name}}/{{url}}" />
+
+		<meta name="twitter:card" value="summary_large_image" />
+		{{#has_twitter}}
+		<meta name="twitter:site" value="@{{twitter}}" />
+		{{/has_twitter}}
+		<meta name="twitter:image" value="https://{{domain_name}}/{{url}}" />
 	</head>
 
 	<body>

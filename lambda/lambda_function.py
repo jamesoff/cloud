@@ -17,9 +17,26 @@ def lambda_handler(event, context):
         template_body = template_body_response['Body'].read()
         target_filename = record['s3']['object']['eTag'][0:8]
         target_object = 'v/{}'.format(target_filename)
+        labels = []
+        if CLOUD_BUCKET_REGION is not None:
+            response = rekognition.detect_labels(Image={'S3Object': {
+                'Bucket': bucket,
+                'Name': key
+            }})
+            labels = [x['Name'] for x in response['Labels'] if x['Confidence'] > 90]
+        if len(labels):
+            description = 'An image, probably of {}'.format(','.join(labels))
+        else:
+            description = 'An image shared with cloud'
+
         rendered_template = bytes(pystache.render(template_body, {
             'url': key,
-            'title': urllib.unquote_plus(key_filename)
+            'title': urllib.unquote_plus(key_filename),
+            'domain_name': bucket,
+            'target_object': target_object,
+            'twitter': CLOUD_TWITTER,
+            'has_twitter': CLOUD_TWITTER is not None,
+            'description': description
         }))
         print('Writing rendered template to {}'.format(target_object))
         s3.put_object(
@@ -40,6 +57,11 @@ s3 = boto3.client('s3')
 sqs = boto3.client('sqs')
 
 CLOUD_QUEUE = os.environ['CLOUD_QUEUE']
+CLOUD_TWITTER = os.environ.get('CLOUD_TWITTER', None)
+CLOUD_BUCKET_REGION = os.environ.get('CLOUD_BUCKET_REGION', None)
+
+if CLOUD_BUCKET_REGION is not None:
+    rekognition = boto3.client('rekognition', CLOUD_BUCKET_REGION)
 
 if __name__ == '__main__':
     lambda_handler({'Records': [
