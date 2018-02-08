@@ -7,7 +7,7 @@ import os
 def lambda_handler(event, context):
     for record in event['Records']:
         bucket = record['s3']['bucket']['name']
-        key = urllib.unquote(record['s3']['object']['key'])
+        key = urllib.unquote_plus(record['s3']['object']['key'])
         key_filename = key.split('/')[1]
         print('Downloading template')
         template_body_response = s3.get_object(
@@ -19,19 +19,27 @@ def lambda_handler(event, context):
         target_object = 'v/{}'.format(target_filename)
         labels = []
         if CLOUD_BUCKET_REGION is not None:
-            response = rekognition.detect_labels(Image={'S3Object': {
-                'Bucket': bucket,
-                'Name': key
-            }})
-            labels = [x['Name'] for x in response['Labels'] if x['Confidence'] > 90]
+            try:
+                response = rekognition.detect_labels(Image={'S3Object': {
+                    'Bucket': bucket,
+                    'Name': key
+                }})
+                labels = [x['Name'] for x in response['Labels'] if x['Confidence'] > 90]
+            except Exception as e:
+                print('Failed to rekognition: {}, {}'.format(key, e))
         if len(labels):
-            description = 'An image, probably of {}'.format(','.join(labels))
+            label_list = ', '.join(labels)
+            page_title = '{} ({})'.format(key_filename, label_list)
+            description = 'An image, probably of {}'.format(label_list)
         else:
             description = 'An image shared with cloud'
+            page_title = key_filename
+            label_list = ''
 
         rendered_template = bytes(pystache.render(template_body, {
             'url': key,
-            'title': urllib.unquote_plus(key_filename),
+            'title': key_filename,
+            'page_title': page_title,
             'domain_name': bucket,
             'target_object': target_object,
             'twitter': CLOUD_TWITTER,
