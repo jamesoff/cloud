@@ -6,6 +6,16 @@ Parameters:
     Description: The DNS domain name the service will run under.
     AllowedPattern: "^[a-z0-9.]+$"
     ConstraintDescription: Must be a DNS name
+  AcmCertificate:
+    Type: String
+    Description: An ACM certificate ARN for CloudFront to use. Must be us-east-1
+    AllowedPattern: "^arn:aws:acm:us-east-1:.+"
+    ConstraintDescription: Must be an ARN for an ACM cert in us-east-1
+  HostedZoneName:
+    Type: String
+    Description: The Route53 Domain Name to create the DNS name in. Blank to skip.
+    AllowedPattern: "^$|^[a-z][a-z0-9.-]+$"
+    ConstraintDescription: A DNS zone, or blank
 
 
 Resources:
@@ -75,6 +85,7 @@ Resources:
       Environment:
         Variables:
           CLOUD_QUEUE: !Ref OutputQueue
+          CLOUD_BUCKET_REGION: !Ref AWS::Region
       Handler: lambda_function.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       Runtime: python2.7
@@ -141,6 +152,11 @@ Resources:
                       - !Ref AWS::AccountId
                       - ":log-group:/aws/lambda/*"
                 Effect: Allow
+              -
+                Action:
+                  - "rekognition:DetectLabels"
+                Resource: "*"
+                Effect: Allow
 
   LambdaPolicy:
     Type: "AWS::Lambda::Permission"
@@ -167,7 +183,8 @@ Resources:
           TargetOriginId: s3
           ViewerProtocolPolicy: redirect-to-https
         ViewerCertificate:
-          CloudFrontDefaultCertificate: true
+          AcmCertificateArn: !Ref AcmCertificate
+          SslSupportMethod: sni-only
         DefaultRootObject: index.html
         Enabled: true
         Origins:
@@ -183,7 +200,12 @@ Resources:
               OriginAccessIdentity: !Ref AWS::NoValue
         PriceClass: PriceClass_100
 
-  Certificate:
-    Type: "AWS::CertificateManager::Certificate"
+  Route53Record:
+    Type: "AWS::Route53::RecordSet"
     Properties:
-      DomainName: !Ref DomainName
+      AliasTarget:
+        DNSName: !GetAtt CloudFront.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+      HostedZoneName: !Ref HostedZoneName
+      Name: !Ref DomainName
+      Type: A
