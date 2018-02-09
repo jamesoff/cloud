@@ -3,6 +3,11 @@ import pystache
 import urllib
 import os
 
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
+patch_all()
+
 
 def lambda_handler(event, context):
     for record in event['Records']:
@@ -36,6 +41,7 @@ def lambda_handler(event, context):
             page_title = key_filename
             label_list = ''
 
+        xray_recorder.begin_subsegment('render_template')
         rendered_template = bytes(pystache.render(template_body, {
             'url': key,
             'title': key_filename,
@@ -46,6 +52,7 @@ def lambda_handler(event, context):
             'has_twitter': CLOUD_TWITTER is not None,
             'description': description
         }))
+        xray_recorder.end_subsegment()
         print('Writing rendered template to {}'.format(target_object))
         s3.put_object(
             Bucket=bucket,

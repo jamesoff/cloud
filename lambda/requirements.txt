@@ -1,2 +1,4 @@
 pystache
 boto3
+aws-xray-sdk
+setuptools
