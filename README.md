@@ -1,21 +1,42 @@
 # Cloud image hosting
 
-Early days; some assembly required.
-
 This is my home-cooked version of cloud-based image hosting a la CloudApp. The flow is:
 
 * image is uploaded to an S3 bucket by the upload script
-* S3 triggers a Lambda function which writes an HTML wrapper for that image and writes that back to the bucket at a new prefix
+* S3 triggers a Lambda function which asks Rekognition to supply some tags for the image, then writes an HTML wrapper for that it and writes that back to the bucket at a new prefix
 * the Lambda function posts to an SQS queue with the path that the HTML file is available at
 * the upload script retrieves the message from the queue and prints the URL to the file
 * CloudFront sits in front of S3 to do HTTPS and caching
 
 ## Approximate deployment instructions
 
-uh, pretty sure you can figure it out from the code and the above. If not, this probably isn't for you anyway ;)
+### Dependencies
 
-Better instructions to follow.
+* an AWS account
+* the awscli installed
 
+### Do this
+
+* In us-east-1, create an ACM certification for the name you want to use for hosting (or upload one)
+* Once the certificate is ready, launch a CloudFormation stack using the supplied template (in whichever region, although probably one with Rekognition is a good idea)
+	* The `DomainName` parameter is the full domain name you want to use (same as your ACM cert)
+	* `AcmCertificate` is the ARN for the cert you generated
+	* `HostedZoneName` is the Route53 zone to create the alias to CloudFront in, which means if DomainName is `cloud.jamesoff.net` it's `jamesoff.net.` (with the trailing dot). If your domain isn't in Route53, you should leave this blank.
+	* `TwitterHandle` is optional; if set it's used in the metadata of the HTML
+	* `KeySerial` should start at `1`. If you want to rotate the access key pair for uploading, update the stack and increment it
+* Wait about 45 minutes for the stack to be complete. CloudFront takes AGES to start/configure.
+* `mkdir -p ~/.config/cloud`
+* Edit `config` in the above directory thusly:
+
+```
+CLOUD_DOMAIN=[your DomainName value]
+CLOUD_QUEUE=[get this from the Stack Outputs]
+CLOUD_PROFILE=[a profile name for the awscli; I use cloud]
+CLOUD_BUCKET=[your DomainName value too]
+```
+
+* Edit `~/.aws/credentials` and add a profile named as per above, with the access key/secret the stack Outputs gives you, and the right default region
+ 
 ## Approximate usage instructions
 
 ```
