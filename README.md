@@ -36,6 +36,7 @@ CLOUD_BUCKET=[your DomainName value too]
 ```
 
 * Edit `~/.aws/credentials` and add a profile named as per above, with the access key/secret the stack Outputs gives you, and the right default region
+* With a profile (`export AWS_PROFILE=...; export AWS_DEFAULT_REGION=...`) which has write access to the bucket (not the credentials you just put in the config, those can only upload images), `./deploy.sh` to upload the template and js/css to S3.
  
 ## Approximate usage instructions
 

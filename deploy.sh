@@ -2,6 +2,10 @@
 
 set -e
 
+# Update S3 assets and optionally lambda code
+# Invoke with "lambda" as first parameter to upload code
+# Don't forget to set the two environment variables accordingly
+
 bucket=${CLOUD_BUCKET?"Missing CLOUD_BUCKET in environment"}
 
 echo Uploading template and assets
