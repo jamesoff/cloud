@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-cloud_bucket=${CLOUD_BUCKET:-"cloud.jamesoff.net"}
-cloud_domain=${CLOUD_DOMAIN:-"cloud.jamesoff.net"}
-cloud_queue=${CLOUD_QUEUE:-"https://sqs.eu-west-1.amazonaws.com/108685319098/cloud-output"}
+[[ -f "$HOME/.config/cloud/config" ]] && source "$HOME/.config/cloud/config"
+
+cloud_bucket=${CLOUD_BUCKET?"Missing CLOUD_BUCKET config"}
+cloud_domain=${CLOUD_DOMAIN?"Missing CLOUD_DOMAIN config"}
+cloud_queue=${CLOUD_QUEUE?"Missing CLOUD_QUEUE config"}
+cloud_profile=${CLOUD_PROFILE?"Missing CLOUD_PROFILE config"}
 
 echoerr() {
 	echo "$@" 1>&2
@@ -33,7 +36,7 @@ fi
 
 filename=$(basename "$file")
 
-if ! aws s3 cp "$file" "s3://$cloud_bucket/assets/$filename" > /dev/null; then
+if ! aws s3 cp "$file" "s3://$cloud_bucket/assets/$filename" --profile "$cloud_profile" > /dev/null; then
 	echoerr "Upload failed!"
 	exit 1
 fi
@@ -44,7 +47,8 @@ while [[ $attempts -lt 6 ]]; do
 	attempts=$(( attempts + 1 ))
 	message_json=$( aws sqs receive-message \
 		--wait-time-seconds 10 \
-		--queue-url "$cloud_queue"
+		--queue-url "$cloud_queue" \
+		--profile "$cloud_profile"
 	)
 
 	if [[ -z $message_json ]]; then
@@ -74,4 +78,5 @@ echo -n "https://$cloud_domain/$cloud_path"
 
 aws sqs delete-message \
 	--queue-url "$cloud_queue" \
-	--receipt-handle "$handle"
+	--receipt-handle "$handle" \
+	--profile "$cloud_profile"
