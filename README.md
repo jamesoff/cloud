@@ -44,6 +44,29 @@ CLOUD_BUCKET=[your DomainName value too]
 https://cloud.jamesoff.net/v/dbaa1926
 ```
 
+I have the following in my zsh config to allow me to run `post image.jpg` and `post-recent-screenshot`. The URL to the hosted image is placed in my clipboard.
+
+```sh
+if [[ -x ~/src/cloud/post-image.sh ]]; then
+	function post() {
+		post_url=$( ~/src/cloud/post-image.sh "$1" )
+		if [[ -n $post_url ]]; then
+			echo "--> $post_url"
+			post_url=$( echo -n $post_url | tr -d '\n' )
+			export POST_LAST_URL=$post_url
+			echo -n $post_url | pbc
+		else
+			echo "Failed."
+		fi
+	}
+else
+	function post() {
+		echo 'cloud post-image.sh is not available or not executable'
+	}
+fi
+alias post-recent-screenshot='post ~/Desktop/Screen\ Shot\ *(om[1])'
+```
+
 ## Architecture
 
 ![Image of architecture](https://raw.githubusercontent.com/jamesoff/cloud/master/gh-assets/aws.png)
