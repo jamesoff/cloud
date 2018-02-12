@@ -2,7 +2,7 @@
 
 set -ex
 
-# Hello! If you're not me, you probably deploy.sh
+# Hello! If you're not me, you probably want deploy.sh
 # This script is for me to update the location used by the CF deployment to get
 # code into Lambda
 
