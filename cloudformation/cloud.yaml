@@ -3,7 +3,7 @@ Description: "Create a cloud image-hosting environment"
 Parameters:
   DomainName:
     Type: String
-    Description: The DNS domain name the service will run under.
+    Description: The DNS domain name the service will run under. e.g. cloud.jamesof.net
     AllowedPattern: "^[a-z0-9.]+$"
     ConstraintDescription: Must be a DNS name
   AcmCertificate:
@@ -13,10 +13,21 @@ Parameters:
     ConstraintDescription: Must be an ARN for an ACM cert in us-east-1
   HostedZoneName:
     Type: String
-    Description: The Route53 Domain Name to create the DNS name in. Blank to skip.
-    AllowedPattern: "^$|^[a-z][a-z0-9.-]+$"
+    Description: "The Route53 Domain Name to create the DNS name in. Must end with a dot. Blank to skip (you must set your own CNAME up to point at CloudFront) e.g. jamesoff.net."
+    AllowedPattern: '^$|^[a-z][a-z0-9.-]+\.$'
     ConstraintDescription: A DNS zone, or blank
+  TwitterHandle:
+    Type: String
+    Description: Your Twitter handle, for the metadata in the HTML files. Optional
+    Default: ""
+  KeySerial:
+    Type: String
+    Description: "Increase this number to rotate the access key/secret key"
+    Default: "1"
 
+Conditions:
+  NoRoute53DNS: !Equals [ !Ref HostedZoneName, "" ]
+  WithRoute53DNS: !Not [ !Equals [ !Ref HostedZoneName, "" ] ]
 
 Resources:
   CloudBucket:
@@ -75,6 +86,8 @@ Resources:
 
   OutputQueue:
     Type: "AWS::SQS::Queue"
+    Properties:
+      MessageRetentionPeriod: 60
 
   LambdaFunction:
     Type: "AWS::Lambda::Function"
@@ -86,6 +99,7 @@ Resources:
         Variables:
           CLOUD_QUEUE: !Ref OutputQueue
           CLOUD_BUCKET_REGION: !Ref AWS::Region
+          CLOUD_TWITTER: !Ref TwitterHandle
       Handler: lambda_function.lambda_handler
       Role: !GetAtt LambdaRole.Arn
       Runtime: python2.7
@@ -185,8 +199,10 @@ Resources:
         ViewerCertificate:
           AcmCertificateArn: !Ref AcmCertificate
           SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.1_2016
         DefaultRootObject: index.html
         Enabled: true
+        HttpVersion: http2
         Origins:
           -
             DomainName:
@@ -202,6 +218,7 @@ Resources:
 
   Route53Record:
     Type: "AWS::Route53::RecordSet"
+    Condition: WithRoute53DNS
     Properties:
       AliasTarget:
         DNSName: !GetAtt CloudFront.DomainName
@@ -209,3 +226,62 @@ Resources:
       HostedZoneName: !Ref HostedZoneName
       Name: !Ref DomainName
       Type: A
+
+  Route53Recordv6:
+    Type: "AWS::Route53::RecordSet"
+    Condition: WithRoute53DNS
+    Properties:
+      AliasTarget:
+        DNSName: !GetAtt CloudFront.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+      HostedZoneName: !Ref HostedZoneName
+      Name: !Ref DomainName
+      Type: AAAA
+
+
+  UploadUser:
+    Type: "AWS::IAM::User"
+    Properties:
+      Policies:
+        -
+          PolicyName: "AllowCloudUpload"
+          PolicyDocument:
+            Statement:
+              -
+                Action: "s3:PutObject"
+                Resource:
+                  Fn::Join:
+                    - ""
+                    -
+                      - "arn:aws:s3:::"
+                      - !Ref DomainName
+                      - "/assets/*"
+                Effect: Allow
+              -
+                Action:
+                  - "sqs:ReceiveMessage"
+                  - "sqs:DeleteMessage"
+                Resource:
+                  - !GetAtt OutputQueue.Arn
+                Effect: Allow
+
+  UploadUserKey:
+    Type: "AWS::IAM::AccessKey"
+    Properties:
+      Serial: !Ref KeySerial
+      UserName: !Ref UploadUser
+
+Outputs:
+  UploadUserAccessKey:
+    Value: !Ref UploadUserKey
+    Description: Use this access key in a profile for the upload script
+  UploadUserSecretKey:
+    Value: !GetAtt UploadUserKey.SecretAccessKey
+    Description: Use this secret key in a profile for the upload script
+  CloudFrontCNAMETarget:
+    Value: !GetAtt CloudFront.DomainName
+    Description: Create a CNAME pointing from the value of DomainName to this name
+    Condition: NoRoute53DNS
+  CloudQueue:
+    Value: !Ref OutputQueue
+    Description: This is the value for CLOUD_QUEUE
