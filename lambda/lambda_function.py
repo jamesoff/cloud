@@ -43,7 +43,7 @@ def lambda_handler(event, context):
 
         xray_recorder.begin_subsegment('render_template')
         rendered_template = bytes(pystache.render(template_body, {
-            'url': key,
+            'url': urllib.quote(key),
             'title': key_filename,
             'page_title': page_title,
             'domain_name': bucket,
