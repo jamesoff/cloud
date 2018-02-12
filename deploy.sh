@@ -10,6 +10,7 @@ aws s3 sync s3-files/inc/ s3://${bucket}/inc --delete --exact-timestamps
 aws s3 cp s3-files/index.html s3://${bucket}/index.html
 
 if [[ $1 == "lambda" ]]; then
+	fn=${CLOUD_FUNCTION?"Missing CLOUD_FUNCTION in environment"}
 	echo Preparing lambda
 	[ -f lambda.zip ] && rm lambda.zip
 	(
@@ -19,5 +20,5 @@ if [[ $1 == "lambda" ]]; then
 	)
 
 	echo Deploying lambda
-	aws lambda update-function-code --function-name cloud-handler --zip-file fileb://lambda.zip
+	aws lambda update-function-code --function-name "${fn}" --zip-file fileb://lambda.zip
 fi
