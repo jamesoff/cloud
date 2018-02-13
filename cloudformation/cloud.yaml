@@ -24,10 +24,14 @@ Parameters:
     Type: String
     Description: "Increase this number to rotate the access key/secret key"
     Default: "1"
+  RetentionDays:
+    Type: String
+    Description: "Number of days to keep objects in S3 before deleting them"
+    Default: "365"
 
 Conditions:
-  NoRoute53DNS: !Equals [ !Ref HostedZoneName, "" ]
-  WithRoute53DNS: !Not [ !Equals [ !Ref HostedZoneName, "" ] ]
+  NoRoute53DNS: !Equals [!Ref HostedZoneName, ""]
+  WithRoute53DNS: !Not [!Equals [!Ref HostedZoneName, ""]]
 
 Resources:
   CloudBucket:
@@ -45,6 +49,16 @@ Resources:
                     Name: prefix
                     Value: "assets/"
             Function: !GetAtt LambdaFunction.Arn
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: !Ref RetentionDays
+            Id: "Cleanup old HTML"
+            Prefix: "v/"
+            Status: Enabled
+          - ExpirationInDays: !Ref RetentionDays
+            Id: "Cleanup old uploads"
+            Prefix: "assets/"
+            Status: Enabled
     DependsOn: LambdaPolicy
 
   BucketPolicy:
