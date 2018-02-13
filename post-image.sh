@@ -73,7 +73,7 @@ if [[ -z "$body" ]]; then
 	exit 1
 fi
 
-cloud_path=$( echo "$body" | cut -d= -f2 )
+cloud_path=$( echo "$body" | cut -d= -f2 | tr -d ' ' )
 echo -n "https://$cloud_domain/$cloud_path"
 
 aws sqs delete-message \
