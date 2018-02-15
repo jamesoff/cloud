@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-[[ -f "$HOME/.config/cloud/config" ]] && source "$HOME/.config/cloud/config"
+cloud_config=${CLOUD_CONFIG:-"config"}
+
+[[ -f "$HOME/.config/cloud/$cloud_config" ]] && source "$HOME/.config/cloud/$cloud_config"
 
 cloud_bucket=${CLOUD_BUCKET?"Missing CLOUD_BUCKET config"}
 cloud_domain=${CLOUD_DOMAIN?"Missing CLOUD_DOMAIN config"}
