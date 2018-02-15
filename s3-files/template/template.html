@@ -20,7 +20,15 @@
 	<body>
 
 		<div id="container">
+			{{#is_image}}
 			<img src="/{{url}}" id="asset" alt="{{description}}" onClick="toggle()" />
+			{{/is_image}}
+			{{#is_video}}
+			<video controls id="asset_video">
+				<source src="/{{url}}" type="video/mp4">
+				No video support (or not enough) in browser.
+			</video>
+			{{/is_video}}
 		</div>
 
 		<script src="/inc/resize.js" type="application/javascript"></script>

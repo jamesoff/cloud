@@ -2,6 +2,7 @@ import boto3
 import pystache
 import urllib
 import os
+import os.path
 
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch_all
@@ -14,6 +15,15 @@ def lambda_handler(event, context):
         bucket = record['s3']['bucket']['name']
         key = urllib.unquote_plus(record['s3']['object']['key'])
         key_filename = key.split('/')[1]
+
+        is_image = True
+        is_video = False
+        (_, key_extension) = os.path.splitext(key_filename)
+        key_extension = key_extension.lower()
+        if key_extension.lower() in ['.mp4']:
+            is_image = False
+            is_video = True
+
         print('Downloading template')
         template_body_response = s3.get_object(
             Bucket=bucket,
@@ -23,7 +33,7 @@ def lambda_handler(event, context):
         target_filename = record['s3']['object']['eTag'][0:8]
         target_object = 'v/{}'.format(target_filename)
         labels = []
-        if CLOUD_BUCKET_REGION is not None:
+        if is_image and CLOUD_BUCKET_REGION is not None:
             try:
                 response = rekognition.detect_labels(Image={'S3Object': {
                     'Bucket': bucket,
@@ -50,7 +60,9 @@ def lambda_handler(event, context):
             'target_object': target_object,
             'twitter': CLOUD_TWITTER,
             'has_twitter': CLOUD_TWITTER is not None,
-            'description': description
+            'description': description,
+            'is_image': is_image,
+            'is_video': is_video
         }))
         xray_recorder.end_subsegment()
         print('Writing rendered template to {}'.format(target_object))

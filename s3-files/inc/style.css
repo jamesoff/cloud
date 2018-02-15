@@ -14,3 +14,8 @@ body {
 	box-shadow: 0px 0px 5px 6px #101010;
 }
 
+#asset_video {
+	max-width: 95vw;
+	max-height: 95vh;
+	box-shadow: 0px 0px 5px 6px #101010;
+}
