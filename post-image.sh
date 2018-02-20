@@ -9,10 +9,7 @@ cloud_domain=${CLOUD_DOMAIN?"Missing CLOUD_DOMAIN config"}
 cloud_queue=${CLOUD_QUEUE?"Missing CLOUD_QUEUE config"}
 cloud_profile=${CLOUD_PROFILE?"Missing CLOUD_PROFILE config"}
 
-# Get the region from the profile configuration if it's not set in .config
-# We need to specify it because if $AWS_DEFAULT_REGION is set it will take
-# precedence over the profile config
-cloud_region=${CLOUD_REGION:-"$(aws configure get region --profile "$cloud_profile")"}
+unset AWS_DEFAULT_REGION
 
 echoerr() {
 	echo "$@" 1>&2
@@ -43,7 +40,7 @@ fi
 
 filename=$(basename "$file")
 
-if ! aws s3 cp "$file" "s3://$cloud_bucket/assets/$filename" --profile "$cloud_profile" --region "$cloud_region" > /dev/null; then
+if ! aws s3 cp "$file" "s3://$cloud_bucket/assets/$filename" --profile "$cloud_profile" > /dev/null; then
 	echoerr "Upload failed!"
 	exit 1
 fi
@@ -55,8 +52,7 @@ while [[ $attempts -lt 6 ]]; do
 	message_json=$( aws sqs receive-message \
 		--wait-time-seconds 10 \
 		--queue-url "$cloud_queue" \
-		--profile "$cloud_profile" \
-		--region "$cloud_region"
+		--profile "$cloud_profile"
 	)
 
 	if [[ -z $message_json ]]; then
@@ -87,5 +83,4 @@ echo -n "https://$cloud_domain/$cloud_path"
 aws sqs delete-message \
 	--queue-url "$cloud_queue" \
 	--receipt-handle "$handle" \
-	--profile "$cloud_profile" \
-	--region "$cloud_region"
+	--profile "$cloud_profile"
