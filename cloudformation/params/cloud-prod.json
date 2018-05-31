@@ -1,0 +1,23 @@
+{
+  "Parameters" : {
+    "DomainName" : "cloud.jamesoff.net",
+    "HostedZoneName": "jamesoff.net.",
+    "KeySerial": "1",
+    "RetentionDays": "365",
+    "TwitterHandle": "jamesoff",
+    "AcmCertificate": "arn:aws:acm:us-east-1:108685319098:certificate/bc780aed-4baf-4330-8edb-228be794ca9f"
+  },
+  "Tags" : {
+    "Stage" : "prod"
+  },
+  "StackPolicy" : {
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "NotAction" : "Update:Delete",
+        "Principal": "*",
+        "Resource" : "*"
+      }
+    ]
+  }
+}
