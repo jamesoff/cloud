@@ -1,26 +1,23 @@
-[
-  {
-    "ParameterKey": "DomainName",
-    "ParameterValue": "cloud2.jamesoff.net"
+{
+  "Parameters" : {
+    "DomainName" : "cloud2.jamesoff.net",
+    "HostedZoneName": "jamesoff.net.",
+    "KeySerial": "1",
+    "RetentionDays": "365",
+    "TwitterHandle": "jamesoff",
+    "AcmCertificate": "arn:aws:acm:us-east-1:108685319098:certificate/9de41dce-63a8-466a-815b-9c63615dcf6d"
   },
-  {
-    "ParameterKey": "HostedZoneName",
-    "ParameterValue": "jamesoff.net."
+  "Tags" : {
+    "Stage" : "dev"
   },
-  {
-    "ParameterKey": "KeySerial",
-    "ParameterValue": "1"
-  },
-  {
-    "ParameterKey": "RetentionDays",
-    "ParameterValue": "365"
-  },
-  {
-    "ParameterKey": "TwitterHandle",
-    "ParameterValue": "365"
-  },
-  {
-    "ParameterKey": "AcmCertificate",
-    "ParameterValue": "arn:aws:acm:us-east-1:108685319098:certificate/9de41dce-63a8-466a-815b-9c63615dcf6d"
+  "StackPolicy" : {
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "NotAction" : "Update:Delete",
+        "Principal": "*",
+        "Resource" : "*"
+      }
+    ]
   }
-]
+}
