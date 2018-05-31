@@ -7,4 +7,5 @@ phases:
       - apt-get -y install jq
   build:
     commands:
-      - cloudformation/test.sh
+      - chmod u+x cloudformation/test.sh
+      - ./cloudformation/test.sh
