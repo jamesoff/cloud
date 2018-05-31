@@ -1,0 +1,26 @@
+[
+  {
+    "ParameterKey": "DomainName",
+    "ParameterValue": "cloud2.jamesoff.net"
+  },
+  {
+    "ParameterKey": "HostedZoneName",
+    "ParameterValue": "jamesoff.net."
+  },
+  {
+    "ParameterKey": "KeySerial",
+    "ParameterValue": "1"
+  },
+  {
+    "ParameterKey": "RetentionDays",
+    "ParameterValue": "365"
+  },
+  {
+    "ParameterKey": "TwitterHandle",
+    "ParameterValue": "365"
+  },
+  {
+    "ParameterKey": "AcmCertificate",
+    "ParameterValue": "arn:aws:acm:us-east-1:108685319098:certificate/9de41dce-63a8-466a-815b-9c63615dcf6d"
+  }
+]
