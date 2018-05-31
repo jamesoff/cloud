@@ -28,6 +28,14 @@ Parameters:
     Type: String
     Description: "Number of days to keep objects in S3 before deleting them"
     Default: "365"
+  BucketName:
+    Type: String
+    Description: "Bucket where the code is stored"
+    Default: "code.jamesoff.net"
+  ObjectKey:
+    Type: String
+    Description: "Key for the ZIP in the bucket"
+    Default: "cloud/lambda.zip"
 
 Conditions:
   NoRoute53DNS: !Equals [!Ref HostedZoneName, ""]
@@ -107,8 +115,8 @@ Resources:
     Type: "AWS::Lambda::Function"
     Properties:
       Code:
-        S3Bucket: "code.jamesoff.net"
-        S3Key: "cloud/lambda.zip"
+        S3Bucket: !Ref BucketName
+        S3Key: !Ref ObjectKey
       Environment:
         Variables:
           CLOUD_QUEUE: !Ref OutputQueue

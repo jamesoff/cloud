@@ -12,4 +12,5 @@ phases:
       - zip -q -r ../lambda.zip ./*
 artifacts:
   files:
-    - lambda.zip
+    - '**/*'
+  base-directory: lambda
