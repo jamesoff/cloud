@@ -104,7 +104,8 @@ Resources:
                   - "arn:aws:s3:::"
                   - !Ref DomainName
                   - "/index.html"
-            Principal: "*"
+            Principal:
+              CanonicalUser: !GetAtt CloudFrontOAI.S3CanonicalUserId
 
   OutputQueue:
     Type: "AWS::SQS::Queue"
@@ -207,6 +208,12 @@ Resources:
             - "arn:aws:s3:::"
             - !Ref DomainName
 
+  CloudFrontOAI:
+    Type: "AWS::CloudFront::CloudFrontOriginAccessIdentity"
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "Access for cloud bucket"
+
   CloudFront:
     Type: "AWS::CloudFront::Distribution"
     Properties:
@@ -235,7 +242,8 @@ Resources:
                   - ".s3.amazonaws.com"
             Id: s3
             S3OriginConfig:
-              OriginAccessIdentity: !Ref AWS::NoValue
+              OriginAccessIdentity:
+                Fn::Sub: "origin-access-identity/cloudfront/${CloudFrontOAI}"
         PriceClass: PriceClass_100
 
   Route53Record:
