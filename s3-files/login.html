@@ -5,9 +5,9 @@
 	</head>
 	<body>
 		<script src="https://sdk.amazonaws.com/js/aws-sdk-2.258.1.min.js"></script>
+		<script src="config.js"></script>
 		DIY cloud hosting.<br />
 		<br />
-		<a href="https://github.com/jamesoff/cloud">github</a>
 
 		<script>
 			function getHashDict() {
@@ -40,46 +40,64 @@
 						return alert('There was an error uploading your image: ', err.message);
 					}
 					alert('Successfully uploaded image.');
+					var params = {
+						QueueUrl: cloudConfig['QueueURL'],
+						AttributeNames: ['All'],
+						MaxNumberOfMessages: 1,
+						MessageAttributeNames: ['All'],
+						VisibilityTimeout: 10,
+						WaitTimeSeconds: 20
+					};
+					sqs.receiveMessage(params, function(err, data) {
+						if (err) console.log(err, err.stack);
+						else {
+							console.log(data);
+							var message = data.Messages[0];
+							var body = message.Body;
+							var info = body.split('=');
+							var image_id = info[1];
+							document.getElementById('imageinfo').innerHTML = "<a href='https://" + cloudConfig['Bucket'] + "/" + image_id + "'>link</a>";
+							var params = {
+								QueueUrl: cloudConfig['QueueURL'],
+								ReceiptHandle: message.ReceiptHandle
+							};
+							sqs.deleteMessage(params, function(err, data) {
+								if (err) console.log(err, err.stack); // an error occurred
+								else     console.log(data);           // successful response
+							});
+						};
+					});
 				});
 			}
 
 			var hashValues = getHashDict();
 
-			if (Object.keys(hashValues).length) {
+			if (Object.keys(hashValues).length > 1) {
 				var creds = new AWS.CognitoIdentityCredentials({
-					IdentityPoolId: 'eu-west-1:dbb0d32a-7097-44be-b111-1b8b110c4c08',
-					Logins: { 'cognito-idp.eu-west-1.amazonaws.com/eu-west-1_jVgMpU5vj': hashValues['id_token'] },
+					IdentityPoolId: cloudConfig['IdentityPool'],
+					Logins: { [cloudConfig['LoginPool']]: hashValues['id_token'] },
 					RoleSessionName: 'moo'
 				},
 				{
-					region: 'eu-west-1'
+					region: cloudConfig['Region']
 				});
 				creds.refresh(function(err) { if (err) console.log(err, err.stack) } );
 				AWS.config.credentials = creds;
 				var s3 = new AWS.S3({
-					region: 'eu-west-1',
-					params: { Bucket: "cloud2.jamesoff.net" }
+					region: cloudConfig['Region'],
+					params: { Bucket: cloudConfig['Bucket'] }
+				});
+				var sqs = new AWS.SQS({
+					region: cloudConfig['Region']
 				});
 			}
 			else {
-				alert('oh no');
-				//window.location.href = "https://cloud-test.auth.eu-west-1.amazoncognito.com?response_type=token&client_id=407g0rte8cj1m9b300ebtf25ba&redirect_uri=" + window.location.href;
+				window.location.href = 'https://' + cloudConfig['AuthHost'] + '/login?response_type=token&client_id=' + cloudConfig['ApplicationID'] + '&redirect_uri=' + window.location.href;
 			}
 
-			/*
-			s3.listObjects({
-				Bucket: 'cloud2.jamesoff.net'
-			}, function(err, data) {
-				if (err) {
-					console.log(err, err.stack)
-				}
-				else {
-					console.log(data)
-				}
-			});
-			*/
 		</script>
 		<input id="photoupload" type="file" accept="image/*">
 		<button id="addphoto" onclick="addPhoto()">Add Image</button>
+		<div id="imageinfo"></div>
 	</body>
 </html>
