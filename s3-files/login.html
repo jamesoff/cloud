@@ -21,21 +21,52 @@
 				return ret;
 			}
 
+			function addPhoto() {
+				var files = document.getElementById('photoupload').files;
+				if (!files.length) {
+					return alert('Please choose a file to upload first.');
+				}
+				var file = files[0];
+				var fileName = file.name;
+				var prefix = 'assets/';
+
+				var imageKey = prefix + fileName;
+				s3.upload({
+					Key: imageKey,
+					Body: file,
+					ACL: 'public-read'
+				}, function(err, data) {
+					if (err) {
+						return alert('There was an error uploading your image: ', err.message);
+					}
+					alert('Successfully uploaded image.');
+				});
+			}
+
 			var hashValues = getHashDict();
 
-			var creds = new AWS.CognitoIdentityCredentials({
-				IdentityPoolId: 'eu-west-1:dbb0d32a-7097-44be-b111-1b8b110c4c08',
-				Logins: { 'cognito-idp.eu-west-1.amazonaws.com/eu-west-1_jVgMpU5vj': hashValues['id_token'] },
-				RoleSessionName: 'moo'
-			},
-			{
-				region: 'eu-west-1'
-			});
-			creds.refresh(function(err) { if (err) console.log(err, err.stack) } );
-			AWS.config.credentials = creds;
-			var s3 = new AWS.S3({
-				region: 'eu-west-1'
-			});
+			if (Object.keys(hashValues).length) {
+				var creds = new AWS.CognitoIdentityCredentials({
+					IdentityPoolId: 'eu-west-1:dbb0d32a-7097-44be-b111-1b8b110c4c08',
+					Logins: { 'cognito-idp.eu-west-1.amazonaws.com/eu-west-1_jVgMpU5vj': hashValues['id_token'] },
+					RoleSessionName: 'moo'
+				},
+				{
+					region: 'eu-west-1'
+				});
+				creds.refresh(function(err) { if (err) console.log(err, err.stack) } );
+				AWS.config.credentials = creds;
+				var s3 = new AWS.S3({
+					region: 'eu-west-1',
+					params: { Bucket: "cloud2.jamesoff.net" }
+				});
+			}
+			else {
+				alert('oh no');
+				//window.location.href = "https://cloud-test.auth.eu-west-1.amazoncognito.com?response_type=token&client_id=407g0rte8cj1m9b300ebtf25ba&redirect_uri=" + window.location.href;
+			}
+
+			/*
 			s3.listObjects({
 				Bucket: 'cloud2.jamesoff.net'
 			}, function(err, data) {
@@ -46,6 +77,9 @@
 					console.log(data)
 				}
 			});
+			*/
 		</script>
+		<input id="photoupload" type="file" accept="image/*">
+		<button id="addphoto" onclick="addPhoto()">Add Image</button>
 	</body>
 </html>
