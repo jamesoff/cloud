@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>cloud.jamesoff.net</title>
+	</head>
+	<body>
+		<script src="https://sdk.amazonaws.com/js/aws-sdk-2.258.1.min.js"></script>
+		DIY cloud hosting.<br />
+		<br />
+		<a href="https://github.com/jamesoff/cloud">github</a>
+
+		<script>
+			function getHashDict() {
+				var hash = window.location.hash.replace('#','');
+				var keyValuePairs = hash.split('&');
+				var ret = {};
+				for (pair of keyValuePairs) {
+					var values = pair.split('=');
+					ret[values[0]] = values[1];
+				}
+				return ret;
+			}
+
+			var hashValues = getHashDict();
+
+			var creds = new AWS.CognitoIdentityCredentials({
+				IdentityPoolId: 'eu-west-1:dbb0d32a-7097-44be-b111-1b8b110c4c08',
+				Logins: { 'cognito-idp.eu-west-1.amazonaws.com/eu-west-1_jVgMpU5vj': hashValues['id_token'] },
+				RoleSessionName: 'moo'
+			},
+			{
+				region: 'eu-west-1'
+			});
+			creds.refresh(function(err) { if (err) console.log(err, err.stack) } );
+			AWS.config.credentials = creds;
+			var s3 = new AWS.S3({
+				region: 'eu-west-1'
+			});
+			s3.listObjects({
+				Bucket: 'cloud2.jamesoff.net'
+			}, function(err, data) {
+				if (err) {
+					console.log(err, err.stack)
+				}
+				else {
+					console.log(data)
+				}
+			});
+		</script>
+	</body>
+</html>
