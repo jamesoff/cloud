@@ -268,38 +268,65 @@ Resources:
       Name: !Ref DomainName
       Type: AAAA
 
+  UploadersGroup:
+    Type: "AWS::IAM::Group"
 
   UploadUser:
     Type: "AWS::IAM::User"
     Properties:
-      Policies:
-        -
-          PolicyName: "AllowCloudUpload"
-          PolicyDocument:
-            Statement:
-              -
-                Action: "s3:PutObject"
-                Resource:
-                  Fn::Join:
-                    - ""
-                    -
-                      - "arn:aws:s3:::"
-                      - !Ref DomainName
-                      - "/assets/*"
-                Effect: Allow
-              -
-                Action:
-                  - "sqs:ReceiveMessage"
-                  - "sqs:DeleteMessage"
-                Resource:
-                  - !GetAtt OutputQueue.Arn
-                Effect: Allow
+      Groups:
+        - !Ref UploadersGroup
+
+  UploadUserPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      Groups:
+        - !Ref UploadersGroup
+      Roles:
+        - !Ref AuthUserIAMRole
+      PolicyName: "AllowCloudUpload"
+      PolicyDocument:
+        Statement:
+          -
+            Action: "s3:PutObject"
+            Resource:
+              Fn::Join:
+                - ""
+                -
+                  - "arn:aws:s3:::"
+                  - !Ref DomainName
+                  - "/assets/*"
+            Effect: Allow
+          -
+            Action:
+              - "sqs:ReceiveMessage"
+              - "sqs:DeleteMessage"
+            Resource:
+              - !GetAtt OutputQueue.Arn
+            Effect: Allow
 
   UploadUserKey:
     Type: "AWS::IAM::AccessKey"
     Properties:
       Serial: !Ref KeySerial
       UserName: !Ref UploadUser
+
+  AuthUserIAMRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Federated: "cognito-identity.amazonaws.com"
+            Action: "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                "cognito-identity.amazonaws.com:aud": "!Ref CognitoIdentityTODO"
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": authenticated
+
 
 Outputs:
   UploadUserAccessKey:
