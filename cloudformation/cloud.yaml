@@ -305,6 +305,23 @@ Resources:
               - !GetAtt OutputQueue.Arn
             Effect: Allow
 
+  CognitoUserPolicy:
+    Type: "AWS::IAM::Policy"
+    Properties:
+      Roles:
+        - !Ref AuthUserIAMRole
+      PolicyName: "AllowCognitoActions"
+      PolicyDocument:
+        Statement:
+          -
+            Effect: Allow
+            Action:
+              - "mobileanalytics:PutEvents"
+              - "cognito-sync:*"
+              - "cognito-identity:*"
+            Resource:
+              - "*"
+
   UploadUserKey:
     Type: "AWS::IAM::AccessKey"
     Properties:
