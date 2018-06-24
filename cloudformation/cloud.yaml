@@ -344,6 +344,10 @@ Resources:
               "ForAnyValue:StringLike":
                 "cognito-identity.amazonaws.com:amr": authenticated
 
+  CognitoUserPool:
+    Type: "AWS::Cognito::UserPool"
+    Properties:
+      UserPoolName: "Cloud User Pool"
 
 Outputs:
   UploadUserAccessKey:
