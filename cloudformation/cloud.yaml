@@ -28,6 +28,10 @@ Parameters:
     Type: String
     Description: "Number of days to keep objects in S3 before deleting them"
     Default: "365"
+  TransitionDays:
+    Type: String
+    Description: "Number of days before transitioning objects to Standard-IA class"
+    Default: "30"
   BucketName:
     Type: String
     Description: "Bucket where the code is stored"
@@ -63,10 +67,16 @@ Resources:
             Id: "Cleanup old HTML"
             Prefix: "v/"
             Status: Enabled
+            Transitions:
+              - TransitionInDays: !Ref TransitionDays
+                StorageClass: STANDARD_IA
           - ExpirationInDays: !Ref RetentionDays
             Id: "Cleanup old uploads"
             Prefix: "assets/"
             Status: Enabled
+            Transitions:
+              - TransitionInDays: !Ref TransitionDays
+                StorageClass: STANDARD_IA
     DependsOn: LambdaPolicy
 
   BucketPolicy:

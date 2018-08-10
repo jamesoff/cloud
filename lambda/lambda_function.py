@@ -71,7 +71,7 @@ def lambda_handler(event, context):
             Key=target_object,
             Body=rendered_template,
             ContentType='text/html',
-            StorageClass='STANDARD_IA'
+            StorageClass='STANDARD'
         )
         sqs.send_message(
             QueueUrl=CLOUD_QUEUE,
